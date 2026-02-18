@@ -1,0 +1,52 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tiukinhoy_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - tiukinhoy_network
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:alpine
+    container_name: tiukinhoy_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - tiukinhoy_network
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: tiukinhoy_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: tiukinhoy
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_USER: tiukinhoy
+      MYSQL_PASSWORD: secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - tiukinhoy_network
+
+networks:
+  tiukinhoy_network:
+    driver: bridge
+
+volumes:
+  db_data:
